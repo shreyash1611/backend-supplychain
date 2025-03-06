@@ -161,17 +161,26 @@ exports.getChainDetails = async (req, res) => {
       return res.status(401).json({ error: 'User ID is required' });
     }
 
-    // Find the chain
+    // First get the user's googleId using their userId
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Now find the chain
     const chain = await SupplyChain.findOne({ chainId });
     if (!chain) {
       return res.status(404).json({ error: 'Supply chain not found' });
     }
 
-    // Find the member and check if they're admin
-    const member = chain.members.find(m => m.googleId === chain.admin);
-    const isAdmin = chain.admin === userId;
+    // Compare the googleId with chain.admin
+    const isAdmin = chain.admin === user.googleId;
     
-    console.log(`User ${userId} requesting chain ${chainId}, isAdmin: ${isAdmin}`);
+    console.log('Comparing:', {
+      'User googleId': user.googleId,
+      'Chain admin': chain.admin,
+      'Is Admin': isAdmin
+    });
     
     res.json({ 
       success: true, 
@@ -185,4 +194,4 @@ exports.getChainDetails = async (req, res) => {
       details: error.message
     });
   }
-}; 
+};
