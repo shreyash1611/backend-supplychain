@@ -155,16 +155,28 @@ exports.getUserChains = async (req, res) => {
 exports.getChainDetails = async (req, res) => {
   try {
     const { chainId } = req.params;
+    const userId = req.headers.authorization;
     
-    
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID is required' });
+    }
+
+    // Find the chain
     const chain = await SupplyChain.findOne({ chainId });
     if (!chain) {
       return res.status(404).json({ error: 'Supply chain not found' });
     }
+
+    // Find the member and check if they're admin
+    const member = chain.members.find(m => m.googleId === chain.admin);
+    const isAdmin = chain.admin === userId;
+    
+    console.log(`User ${userId} requesting chain ${chainId}, isAdmin: ${isAdmin}`);
     
     res.json({ 
       success: true, 
-      chain
+      chain,
+      isAdmin
     });
   } catch (error) {
     console.error('Get chain details error:', error);
